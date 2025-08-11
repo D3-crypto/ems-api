@@ -242,13 +242,7 @@ def reset_password(request):
         email = serializer.validated_data['email']
         otp_code = serializer.validated_data['otp']
         new_password = serializer.validated_data['new_password']
-        # ENFORCEMENT: Check if user has logged out after last login
-        user = MongoUser.get_by_email(email)
-        if user:
-            latest_logout = MongoLogoutSession.get_latest_logout(user.id)
-            latest_login = MongoLoginSession.get_latest_login(user.id)
-            if latest_logout and latest_login and latest_logout.data['logout_time'] > latest_login.timestamp:
-                return Response({'error': 'You have logged out. Please log in again to reset password.'}, status=status.HTTP_401_UNAUTHORIZED)
+    # No login/logout enforcement for forgot password reset. Only OTP verification required.
         # Get the latest unused OTP for forgot password
         otp_obj = MongoOTP.get_latest_unused(email, 'forgot_password')
         if not otp_obj:
