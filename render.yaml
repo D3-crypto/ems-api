@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: ems-django
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn ems.wsgi:application"
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: ems.settings
+      - key: SECRET_KEY
+        value: your-secret-key
+      - key: DEBUG
+        value: False
+      - key: RENDER_EXTERNAL_HOSTNAME
+        value: your-app-name.onrender.com
+      # Add other environment variables as needed
