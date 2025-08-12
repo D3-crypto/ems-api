@@ -50,6 +50,3 @@ A Django REST API for employee management, attendance tracking, and authenticati
 ## Documentation & Testing
 - See `EMS_API_DOCUMENTATION.md` for detailed API docs.
 - Use the provided Postman collection (`EMS_API_Postman_Collection.json`) for testing.
-
-## License
-MIT
