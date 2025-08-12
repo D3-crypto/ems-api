@@ -11,6 +11,10 @@ from bson import ObjectId
 from mongodb_handler import mongo_handler
 from django.contrib.auth.hashers import make_password, check_password
 
+def get_ist_time():
+    """Return the current UTC time plus the IST offset."""
+    return datetime.utcnow() + timedelta(hours=5, minutes=30)
+
 
 class MongoUserManager:
     """Django-like manager for MongoUser"""
@@ -92,8 +96,8 @@ class MongoUser:
             'email': email,
             'password': make_password(password),
             'is_verified': False,
-            'created_at': datetime.utcnow(),
-            'updated_at': datetime.utcnow()
+            'created_at': get_ist_time(),
+            'updated_at': get_ist_time()
         }
         
         collection = mongo_handler.get_collection('users')
@@ -106,7 +110,7 @@ class MongoUser:
             else:
                 # User exists but not verified - check if it's recent (within 10 minutes)
                 created_at = existing_user.get('created_at')
-                if created_at and (datetime.utcnow() - created_at).total_seconds() < 600:  # 10 minutes
+                if created_at and (get_ist_time() - created_at).total_seconds() < 600:  # 10 minutes
                     raise ValueError("User with this email already exists. Please verify your email or wait 10 minutes to sign up again.")
                 else:
                     # Old unverified user - delete and create new
@@ -120,7 +124,7 @@ class MongoUser:
     def cleanup_unverified_users(cls, email=None):
         """Clean up unverified users older than 10 minutes"""
         collection = mongo_handler.get_collection('users')
-        ten_minutes_ago = datetime.utcnow() - timedelta(minutes=10)
+        ten_minutes_ago = get_ist_time() - timedelta(minutes=10)
         
         query = {
             'is_verified': False,
@@ -191,7 +195,7 @@ class MongoUser:
     
     def save(self):
         """Save user data to MongoDB"""
-        self.data['updated_at'] = datetime.utcnow()
+        self.data['updated_at'] = get_ist_time()
         collection = mongo_handler.get_collection('users')
         collection.update_one(
             {'_id': self.data['_id']},
@@ -308,7 +312,7 @@ class MongoOTP:
             'otp': otp_code,
             'purpose': purpose,
             'is_used': False,
-            'created_at': datetime.utcnow()
+            'created_at': get_ist_time()
         }
         
         collection = mongo_handler.get_collection('otps')
@@ -340,7 +344,7 @@ class MongoOTP:
         if not created_at:
             return False
         
-        return (datetime.utcnow() - created_at).total_seconds() < 600  # 10 minutes
+        return (get_ist_time() - created_at).total_seconds() < 600  # 10 minutes
     
     def mark_as_used(self):
         """Mark OTP as used"""
@@ -363,7 +367,7 @@ class MongoOTP:
     def cleanup_expired_otps(cls, email=None):
         """Delete all expired OTPs (older than 10 minutes)"""
         collection = mongo_handler.get_collection('otps')
-        expiry_time = datetime.utcnow() - timedelta(minutes=10)
+        expiry_time = get_ist_time() - timedelta(minutes=10)
         
         query = {'created_at': {'$lt': expiry_time}}
         
@@ -422,8 +426,8 @@ class MongoPandit:
             'Pandit_name': pandit_name,
             'phone': phone,
             'Location': location,
-            'created_at': datetime.utcnow(),
-            'updated_at': datetime.utcnow()
+            'created_at': get_ist_time(),
+            'updated_at': get_ist_time()
         }
         
         result = collection.insert_one(pandit_data)
@@ -504,7 +508,7 @@ class MongoLoginSession:
             'user_id': user_id,
             'username': username,
             'device_type': device_type,
-            'login_time': datetime.utcnow(),
+            'login_time': get_ist_time(),
             'is_active': True
         }
         collection = mongo_handler.get_collection('login_sessions')
@@ -547,7 +551,7 @@ class MongoLogoutSession:
         session_data = {
             'user_id': user_id,
             'device_type': device_type,
-            'logout_time': datetime.utcnow(),
+            'logout_time': get_ist_time(),
         }
         collection = mongo_handler.get_collection('logout_sessions')
         result = collection.insert_one(session_data)
@@ -676,7 +680,7 @@ class MongoAttendance:
             'location': location,
             'latitude': latitude,
             'longitude': longitude,
-            'created_at': datetime.utcnow()
+            'created_at': get_ist_time()
         }
         punched_in_collection.insert_one(punch_in_data)
         return punch_in_data
@@ -696,7 +700,7 @@ class MongoAttendance:
         punch_out_data['punched_out_location'] = location
         punch_out_data['punched_out_latitude'] = latitude
         punch_out_data['punched_out_longitude'] = longitude
-        punch_out_data['punched_out_at'] = datetime.utcnow()
+        punch_out_data['punched_out_at'] = get_ist_time()
         punched_out_collection.insert_one(punch_out_data)
         punched_in_collection.delete_one({'user_id': user_id})
         return punch_out_data

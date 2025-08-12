@@ -19,7 +19,11 @@ from .serializers import (
     PunchOutSerializer,
     AttendanceSerializer
 )
+from datetime import datetime, timedelta
 
+def get_ist_time():
+    """Return the current time in IST by adding 5 hours and 30 minutes to UTC."""
+    return datetime.utcnow() + timedelta(hours=5, minutes=30)
 
 def generate_jwt_tokens(mongo_user):
     """Generate JWT tokens for MongoDB user using Django User"""
@@ -298,9 +302,11 @@ def punch_in(request):
     user_id = user.id
     username = user.username
     email = user.email
-    from datetime import datetime
-    date = datetime.now().strftime('%Y-%m-%d')
-    time = datetime.now().strftime('%H:%M:%S')
+    
+    ist_time = get_ist_time()
+    date = ist_time.strftime('%Y-%m-%d')
+    time = ist_time.strftime('%H:%M:%S')
+
     # ENFORCEMENT: Check if user is already punched in
     from mongo_models import mongo_handler
     punched_in_collection = mongo_handler.get_collection('punched_in')
@@ -326,7 +332,7 @@ def punch_in(request):
         'location': location,
         'latitude': latitude,
         'longitude': longitude,
-        'created_at': datetime.utcnow()
+        'created_at': ist_time
     }
     result = punched_in_collection.insert_one(punch_in_data)
     # Also insert into attendance collection
@@ -364,9 +370,11 @@ def punch_out(request):
     active_session = MongoLoginSession.get_active_session(user_id)
     if not active_session:
         return Response({'error': 'No active session found. Please login first.'}, status=status.HTTP_401_UNAUTHORIZED)
-    from datetime import datetime
-    date = datetime.now().strftime('%Y-%m-%d')
-    time = datetime.now().strftime('%H:%M:%S')
+
+    ist_time = get_ist_time()
+    date = ist_time.strftime('%Y-%m-%d')
+    time = ist_time.strftime('%H:%M:%S')
+
     # ENFORCEMENT: Check if user is punched in
     from mongo_models import mongo_handler, MongoAttendance
     punched_in_collection = mongo_handler.get_collection('punched_in')
@@ -392,7 +400,7 @@ def punch_out(request):
             'punched_out_location': location,
             'punched_out_latitude': latitude,
             'punched_out_longitude': longitude,
-            'punched_out_at': datetime.utcnow()
+            'punched_out_at': ist_time
         }}
     )
     # Serialize ObjectId and datetime fields for JSON response
