@@ -4,7 +4,7 @@ from django.conf import settings
 
 # Dynamic model imports based on database configuration
 if getattr(settings, 'USE_MONGODB', False):
-    from mongo_models import MongoUser as User, MongoOTP as OTP, MongoAttendance as Attendance
+    from mongo_models import MongoUser as User, MongoOTP as OTP, MongoAttendance as Attendance, MongoLeave
 else:
     from .models import User, OTP, Attendance
 
@@ -133,3 +133,30 @@ class AttendanceSerializer(serializers.Serializer):
     longitude = serializers.CharField()
     action_type = serializers.CharField()
     created_at = serializers.DateTimeField(read_only=True)
+
+
+class LeaveSerializer(serializers.Serializer):
+    leave_type = serializers.CharField(max_length=100)
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
+    reason = serializers.CharField(max_length=500)
+    is_full_day = serializers.BooleanField()
+
+    def validate(self, data):
+        if data['start_date'] > data['end_date']:
+            raise serializers.ValidationError("End date must be after start date.")
+        return data
+
+class LeaveListSerializer(serializers.Serializer):
+    id = serializers.CharField(read_only=True)
+    user_id = serializers.CharField(read_only=True)
+    username = serializers.CharField(read_only=True)
+    email = serializers.EmailField(read_only=True)
+    leave_type = serializers.CharField(read_only=True)
+    start_date = serializers.DateTimeField(read_only=True)
+    end_date = serializers.DateTimeField(read_only=True)
+    reason = serializers.CharField(read_only=True)
+    is_full_day = serializers.BooleanField(read_only=True)
+    status = serializers.CharField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)

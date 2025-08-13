@@ -1,4 +1,5 @@
 from rest_framework import status
+from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -7,8 +8,9 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from decouple import config
-from mongo_models import MongoUser, MongoOTP, MongoLoginSession, MongoAttendance, MongoLogoutSession
+from mongo_models import MongoUser, MongoOTP, MongoLoginSession, MongoAttendance, MongoLogoutSession, MongoLeave
 from mongodb_handler import mongo_handler
+from .permissions import IsAdmin
 from .serializers import (
     UserSignupSerializer, 
     OTPVerificationSerializer, 
@@ -17,7 +19,9 @@ from .serializers import (
     ResetPasswordSerializer,
     PunchInSerializer,
     PunchOutSerializer,
-    AttendanceSerializer
+    AttendanceSerializer,
+    LeaveSerializer,
+    LeaveListSerializer
 )
 from datetime import datetime, timedelta
 
@@ -433,6 +437,7 @@ def logout(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdmin])
 def get_attendance(request):
     """Get attendance records for all users"""
     try:
@@ -465,3 +470,68 @@ def get_attendance_status(request):
         return Response({'status': 'ok'}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': 'An error occurred while checking attendance status'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class LeaveView(APIView):
+    """
+    API endpoint for applying for leave and listing leave applications.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        Apply for leave.
+        """
+        serializer = LeaveSerializer(data=request.data)
+        if serializer.is_valid():
+            user = MongoUser.get_by_email(request.user.email)
+            if not user:
+                return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            leave = MongoLeave.create_leave(
+                user_id=user.id,
+                username=user.username,
+                email=user.email,
+                leave_type=serializer.validated_data['leave_type'],
+                start_date=serializer.validated_data['start_date'],
+                end_date=serializer.validated_data['end_date'],
+                reason=serializer.validated_data['reason'],
+                is_full_day=serializer.validated_data['is_full_day']
+            )
+            return Response(LeaveListSerializer(leave.to_dict()).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request):
+        """
+        List leave applications for the logged-in user or all users if admin.
+        """
+        user = MongoUser.get_by_email(request.user.email)
+        if user.role == 'admin':
+            leaves = MongoLeave.get_all()
+        else:
+            leaves = MongoLeave.get_by_user(user.id)
+            
+        serializer = LeaveListSerializer([leave.to_dict() for leave in leaves], many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class LeaveAdminView(APIView):
+    """
+    API endpoint for admin to approve or reject leave applications.
+    """
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def patch(self, request, leave_id):
+        """
+        Approve or reject a leave application.
+        """
+        leave = MongoLeave.get_by_id(leave_id)
+        if not leave:
+            return Response({'error': 'Leave application not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        new_status = request.data.get('status')
+        if new_status not in ['approved', 'rejected']:
+            return Response({'error': 'Invalid status. Must be "approved" or "rejected".'}, status=status.HTTP_400_BAD_REQUEST)
+
+        leave.data['status'] = new_status
+        leave.save()
+        
+        return Response(LeaveListSerializer(leave.to_dict()).data, status=status.HTTP_200_OK)

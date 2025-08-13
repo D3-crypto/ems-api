@@ -33,6 +33,8 @@ A Django REST API for employee management, attendance tracking, and authenticati
 
 ## API Endpoints
 - **Authentication:**
+  - `POST /api/employee/signup/` — User signup with email and password
+  - `POST /api/employee/verify-otp/` — Verify user email with OTP
   - `POST /api/login/` — Login with email and password
   - `POST /api/logout/` — Logout and deactivate session
   - `POST /api/forgot-password/` — Request OTP for password reset
@@ -40,7 +42,11 @@ A Django REST API for employee management, attendance tracking, and authenticati
 - **Attendance:**
   - `POST /api/punch-in/` — Punch in (requires JWT)
   - `POST /api/punch-out/` — Punch out (requires JWT)
-  - `GET /api/attendance/` — Get all attendance records (requires JWT)
+  - `GET /api/attendance/` — Get all attendance records (requires JWT, Admin only)
+- **Leave:**
+  - `POST /api/employee/leave/` — Apply for leave (requires JWT)
+  - `GET /api/employee/leave/` — List leave applications (employees list their own, admins list all) (requires JWT)
+  - `PATCH /api/employee/leave/admin/<leave_id>/` — Approve or reject a leave application (requires JWT, Admin only)
 
 ## Usage Notes
 - All protected endpoints require the `Authorization: Bearer <access_token>` header.
@@ -51,5 +57,8 @@ A Django REST API for employee management, attendance tracking, and authenticati
 - See `EMS_API_DOCUMENTATION.md` for detailed API docs.
 - Use the provided Postman collection (`EMS_API_Postman_Collection.json`) for testing.
 
-## License
-MIT
+## Admin Functionality
+The system supports an \'admin\' role with elevated privileges. Currently, only administrators can view all attendance records and approve/reject leave applications.
+
+To create an admin user, you can use the `make_admin` management command:
+

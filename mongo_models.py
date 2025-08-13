@@ -86,7 +86,7 @@ class MongoUser:
         self.data = kwargs
     
     @classmethod
-    def create_user(cls, username, email, password):
+    def create_user(cls, username, email, password, role="employee"):
         """Create a new user"""
         # Clean up unverified users older than 10 minutes before creating new user
         cls.cleanup_unverified_users(email)
@@ -96,6 +96,7 @@ class MongoUser:
             'email': email,
             'password': make_password(password),
             'is_verified': False,
+            'role': role,
             'created_at': get_ist_time(),
             'updated_at': get_ist_time()
         }
@@ -221,6 +222,10 @@ class MongoUser:
     @property
     def is_verified(self):
         return self.data.get('is_verified', False)
+
+    @property
+    def role(self):
+        return self.data.get('role', 'employee')
 
 
 class MongoOTPManager:
@@ -770,3 +775,80 @@ class MongoAttendance:
     @property
     def action_type(self):
         return self.data.get('action_type')
+
+class MongoLeave:
+    """MongoDB Leave model for Employee Management System"""
+
+    def __init__(self, **kwargs):
+        self.collection = mongo_handler.get_collection('leaves')
+        self.data = kwargs
+
+    @classmethod
+    def create_leave(cls, user_id, username, email, leave_type, start_date, end_date, reason, is_full_day):
+        """Create a new leave application"""
+        leave_data = {
+            'user_id': user_id,
+            'username': username,
+            'email': email,
+            'leave_type': leave_type,
+            'start_date': start_date,
+            'end_date': end_date,
+            'reason': reason,
+            'is_full_day': is_full_day,
+            'status': 'pending',  # Default status
+            'created_at': get_ist_time(),
+            'updated_at': get_ist_time()
+        }
+        
+        collection = mongo_handler.get_collection('leaves')
+        result = collection.insert_one(leave_data)
+        leave_data['_id'] = result.inserted_id
+        return cls(**leave_data)
+
+    @classmethod
+    def get_by_id(cls, leave_id):
+        """Get leave by ID"""
+        collection = mongo_handler.get_collection('leaves')
+        leave_data = collection.find_one({'_id': ObjectId(leave_id)})
+        return cls(**leave_data) if leave_data else None
+        
+    @classmethod
+    def get_by_user(cls, user_id):
+        """Get all leave applications for a user"""
+        collection = mongo_handler.get_collection('leaves')
+        leaves = []
+        for leave_data in collection.find({'user_id': user_id}).sort('created_at', -1):
+            leaves.append(cls(**leave_data))
+        return leaves
+
+    @classmethod
+    def get_all(cls):
+        """Get all leave applications"""
+        collection = mongo_handler.get_collection('leaves')
+        leaves = []
+        for leave_data in collection.find().sort('created_at', -1):
+            leaves.append(cls(**leave_data))
+        return leaves
+
+    def save(self):
+        """Save leave data to MongoDB"""
+        self.data['updated_at'] = get_ist_time()
+        collection = mongo_handler.get_collection('leaves')
+        collection.update_one(
+            {'_id': self.data['_id']},
+            {'$set': self.data}
+        )
+    def to_dict(self):
+        """Convert to dictionary"""
+        data = self.data.copy()
+        data['id'] = str(data.pop('_id'))
+        # Convert datetime objects to string
+        if isinstance(data.get('start_date'), datetime):
+            data['start_date'] = data['start_date'].isoformat()
+        if isinstance(data.get('end_date'), datetime):
+            data['end_date'] = data['end_date'].isoformat()
+        if isinstance(data.get('created_at'), datetime):
+            data['created_at'] = data['created_at'].isoformat()
+        if isinstance(data.get('updated_at'), datetime):
+            data['updated_at'] = data['updated_at'].isoformat()
+        return data

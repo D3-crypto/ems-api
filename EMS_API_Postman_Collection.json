@@ -1,0 +1,397 @@
+{
+	"info": {
+		"_postman_id": "c8a2a5c7-3f9f-4e7a-8b7d-0e0d8a0f4b0b",
+		"name": "EMS API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_collection_id": "c8a2a5c7-3f9f-4e7a-8b7d-0e0d8a0f4b0b"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"var data = JSON.parse(responseBody);",
+					"if (data && data.token) {",
+					"    pm.collectionVariables.set(\"jwt_token\", data.token);",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:8000",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Signup",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_name\": \"testuser\",\n    \"email\": \"testuser@example.com\",\n    \"password\": \"password123\",\n    \"reEnterPassword\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employee/signup/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"signup",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify OTP",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"testuser@example.com\",\n    \"otp\": \"123456\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employee/verify-otp/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"verify-otp",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"testuser@example.com\",\n    \"password\": \"password123\",\n    \"deviceType\": \"web\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employee/login/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"login",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"testuser@example.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employee/forgot-password/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"forgot-password",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"testuser@example.com\",\n    \"otp\": \"123456\",\n    \"new_password\": \"newpassword123\",\n    \"confirm_password\": \"newpassword123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employee/reset-password/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"reset-password",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"deviceType\": \"web\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employee/logout/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"logout",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Attendance",
+			"item": [
+				{
+					"name": "Punch In",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"location\": \"Office A\",\n    \"latitude\": 34.0522,\n    \"longitude\": -118.2437\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employee/punch-in/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"punch-in",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Punch Out",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"location\": \"Office A\",\n    \"latitude\": 34.0522,\n    \"longitude\": -118.2437\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employee/punch-out/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"punch-out",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Attendance (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/employee/attendance/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"attendance",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Leave",
+			"item": [
+				{
+					"name": "Apply for Leave",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"leave_type\": \"sick\",\n    \"start_date\": \"2023-10-27\",\n    \"end_date\": \"2023-10-28\",\n    \"reason\": \"Feeling unwell\",\n    \"is_full_day\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employee/leave/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"leave",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Leave Applications",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/employee/leave/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"leave",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Approve/Reject Leave Application (Admin)",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"approved\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employee/leave/admin/:leave_id/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"leave",
+								"admin",
+								":leave_id",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

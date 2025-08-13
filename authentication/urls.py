@@ -12,4 +12,6 @@ urlpatterns = [
     path('attendance/', views.get_attendance, name='get_attendance'),
     path('attendance/status/', views.get_attendance_status, name='get_attendance_status'),
     path('logout/', views.logout, name='logout'),
+    path('leave/', views.LeaveView.as_view(), name='leave'),
+    path('leave/admin/<str:leave_id>/', views.LeaveAdminView.as_view(), name='leave_admin'),
 ]
